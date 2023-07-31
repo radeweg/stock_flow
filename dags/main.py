@@ -21,29 +21,28 @@ def main():
     pyspark_df = spark.createDataFrame(data)
     pyspark_df.describe().show()
     pyspark_df = f.add_new_required_column(pyspark_df)
-    f.count_ytd_return(pyspark_df)
+    ytd = f.count_ytd_return(pyspark_df)
     f.count_hv_ratio(pyspark_df)
-    f.moving_average(pyspark_df)
+    moving_average = f.moving_average(pyspark_df)
 
     # write
     pyspark_df.select("*").write.mode("overwrite").format("jdbc") \
-        .option("url", 'jdbc:postgresql://localhost:5432/postgres') \
+        .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
         .option("driver", "org.postgresql.Driver") \
-        .option("dbtable", "postgres") \
-        .option("user", "postgres") \
-        .option("password", "postgres").save()
+        .option("dbtable", "airflow") \
+        .option("user", "airflow") \
+        .option("password", "airflow").save()
 
     # read
     logging.info(spark.read.format("jdbc") \
-                 .option("url", 'jdbc:postgresql://localhost:5432/postgres') \
+                 .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
                  .option("driver", "org.postgresql.Driver") \
-                 .option("user", "postgres") \
-                 .option("password", "postgres") \
-                 .option("query", "SELECT * FROM postgres") \
+                 .option("user", "airflow") \
+                 .option("password", "airflow") \
+                 .option("query", "SELECT * FROM airflow") \
                  .load().show())
-
-    conn_id = spark.sparkContext.applicationId
-
+    ytd.show()
+    moving_average.show()
 
 
 if __name__ == '__main__':

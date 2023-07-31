@@ -4,11 +4,10 @@ import requests
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from airflow.operators.python import PythonOperator
 
-jars = "postgresql-42.5.4.jar"
-driver_class_path = "postgresql-42.5.4.jar"
-spark_job = "/usr/local/spark/main.py "
+jars = "/opt/airflow/dags/postgresql-42.5.4.jar"
+driver_class_path = "/opt/airflow/dags/postgresql-42.5.4.jar"
+spark_job = "/opt/airflow/dags/main.py"
 
 
 default_args = {
@@ -34,6 +33,8 @@ with DAG(
     get_data_ = SparkSubmitOperator(
         task_id=task_id,
         application=spark_job,
+        conn_id='spark_conn_id',
+        driver_class_path=driver_class_path,
         jars=jars,
         dag=dag
     )
