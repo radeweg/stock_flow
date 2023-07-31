@@ -5,6 +5,7 @@ import functions.function as f
 from pyspark.sql import SparkSession
 
 
+
 def main():
     spark = (SparkSession.builder
              .getOrCreate())
@@ -26,10 +27,10 @@ def main():
     moving_average = f.moving_average(pyspark_df)
 
     # write
-    pyspark_df.select("*").write.mode("overwrite").format("jdbc") \
+    ytd.select("*").write.mode("overwrite").format("jdbc") \
         .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
         .option("driver", "org.postgresql.Driver") \
-        .option("dbtable", "airflow") \
+        .option("dbtable", "ytd_table") \
         .option("user", "airflow") \
         .option("password", "airflow").save()
 
@@ -39,7 +40,7 @@ def main():
                  .option("driver", "org.postgresql.Driver") \
                  .option("user", "airflow") \
                  .option("password", "airflow") \
-                 .option("query", "SELECT * FROM airflow") \
+                 .option("query", "SELECT * FROM ytd_table") \
                  .load().show())
     ytd.show()
     moving_average.show()

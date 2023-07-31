@@ -4,11 +4,13 @@ import requests
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.providers.google.cloud.transfers.postgres_to_gcs import PostgresToGCSOperator
 
 jars = "/opt/airflow/dags/postgresql-42.5.4.jar"
 driver_class_path = "/opt/airflow/dags/postgresql-42.5.4.jar"
-spark_job = "/opt/airflow/dags/main.py"
+spark_job = "/opt/airflow/dags/send_raw_data_to_postgres.py"
 
+query = """SELECT * FROM stock_flow"""
 
 default_args = {
     'owner': 'airflow',
@@ -38,5 +40,15 @@ with DAG(
         jars=jars,
         dag=dag
     )
+    t2_task_id = f"send_data_to_gcs"
+    store_data_in_gcs = PostgresToGCSOperator(
+        task_id=t2_task_id,
+        postgres_conn_id='postgres_local',
+        gcp_conn_id='google_connection',
+        export_format='NEWLINE_DELIMITED_JSON',
+        bucket='databricks-2864737403744337',
+        filename='stock_flow_file.json',
+        sql=query
+    )
 
-    start_dag >> get_data_ >> end_dag
+    start_dag >> get_data_ >> store_data_in_gcs >> end_dag
