@@ -63,7 +63,7 @@ with DAG(
         bucket=source_bucket,
         source_objects='ytd_file.json',
         write_disposition="WRITE_TRUNCATE",
-        source_format = "NEWLINE_DELIMITED_JSON",
+        source_format="NEWLINE_DELIMITED_JSON",
         autodetect=True,
         destination_project_dataset_table=destination_table_name
     )

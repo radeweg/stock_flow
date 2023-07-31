@@ -5,12 +5,22 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.providers.google.cloud.transfers.postgres_to_gcs import PostgresToGCSOperator
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+
 
 jars = "/opt/airflow/dags/postgresql-42.5.4.jar"
 driver_class_path = "/opt/airflow/dags/postgresql-42.5.4.jar"
 spark_job = "/opt/airflow/dags/send_raw_data_to_postgres.py"
+destination_table_name = "long-justice-346420.stock_flow_dataset.stock_flow"
+source_bucket = 'databricks-2864737403744337'
+
 
 query = """SELECT * FROM stock_flow"""
+
+
+postgres_conn_id = 'postgres_local'
+gcp_conn_id = 'google_connection'
+
 
 default_args = {
     'owner': 'airflow',
@@ -43,12 +53,24 @@ with DAG(
     t2_task_id = f"send_data_to_gcs"
     store_data_in_gcs = PostgresToGCSOperator(
         task_id=t2_task_id,
-        postgres_conn_id='postgres_local',
-        gcp_conn_id='google_connection',
+        postgres_conn_id=postgres_conn_id,
+        gcp_conn_id=gcp_conn_id,
         export_format='NEWLINE_DELIMITED_JSON',
         bucket='databricks-2864737403744337',
         filename='stock_flow_file.json',
         sql=query
     )
 
-    start_dag >> get_data_ >> store_data_in_gcs >> end_dag
+    t3_task_id = f"store_data_in_table"
+    gcs_to_bq = GCSToBigQueryOperator(
+        task_id=t3_task_id,
+        gcp_conn_id=gcp_conn_id,
+        bucket=source_bucket,
+        source_objects='stock_flow_file.json',
+        write_disposition="WRITE_TRUNCATE",
+        source_format="NEWLINE_DELIMITED_JSON",
+        autodetect=True,
+        destination_project_dataset_table=destination_table_name
+    )
+
+    start_dag >> get_data_ >> store_data_in_gcs >> gcs_to_bq >> end_dag
