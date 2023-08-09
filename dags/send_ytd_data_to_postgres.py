@@ -5,7 +5,6 @@ import functions.function as f
 from pyspark.sql import SparkSession
 
 
-
 def main():
     spark = (SparkSession.builder
              .getOrCreate())
@@ -23,27 +22,13 @@ def main():
     pyspark_df.describe().show()
     pyspark_df = f.add_new_required_column(pyspark_df)
     ytd = f.count_ytd_return(pyspark_df)
-    f.count_hv_ratio(pyspark_df)
-    moving_average = f.moving_average(pyspark_df)
 
+    output_path = "hdfs://localhost:9000/spark"
     # write
-    ytd.select("*").write.mode("overwrite").format("jdbc") \
-        .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
-        .option("driver", "org.postgresql.Driver") \
-        .option("dbtable", "ytd_table") \
-        .option("user", "airflow") \
-        .option("password", "airflow").save()
-
+    ytd.write.parquet(output_path,mode="overwrite")
     # read
-    logging.info(spark.read.format("jdbc") \
-                 .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
-                 .option("driver", "org.postgresql.Driver") \
-                 .option("user", "airflow") \
-                 .option("password", "airflow") \
-                 .option("query", "SELECT * FROM ytd_table") \
-                 .load().show())
-    ytd.show()
-    moving_average.show()
+    ytd_read = spark.read.parquet(output_path)
+    ytd_read.show()
 
 
 if __name__ == '__main__':

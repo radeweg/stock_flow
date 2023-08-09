@@ -46,26 +46,26 @@ with DAG(
         jars=jars,
         dag=dag
     )
-    t2_task_id = f"send_data_to_gcs"
-    store_data_in_gcs = PostgresToGCSOperator(
-        task_id=t2_task_id,
-        postgres_conn_id=postgres_conn_id,
-        gcp_conn_id=gcp_conn_id,
-        export_format='NEWLINE_DELIMITED_JSON',
-        bucket=source_bucket,
-        filename='ytd_file.json',
-        sql=query
-    )
-    t3_task_id = f"store_data_in_table"
-    gcs_to_bq = GCSToBigQueryOperator(
-        task_id=t3_task_id,
-        gcp_conn_id=gcp_conn_id,
-        bucket=source_bucket,
-        source_objects='ytd_file.json',
-        write_disposition="WRITE_TRUNCATE",
-        source_format="NEWLINE_DELIMITED_JSON",
-        autodetect=True,
-        destination_project_dataset_table=destination_table_name
-    )
+    # t2_task_id = f"send_data_to_gcs"
+    # store_data_in_gcs = PostgresToGCSOperator(
+    #     task_id=t2_task_id,
+    #     postgres_conn_id=postgres_conn_id,
+    #     gcp_conn_id=gcp_conn_id,
+    #     export_format='NEWLINE_DELIMITED_JSON',
+    #     bucket=source_bucket,
+    #     filename='ytd_file.json',
+    #     sql=query
+    # )
+    # t3_task_id = f"store_data_in_table"
+    # gcs_to_bq = GCSToBigQueryOperator(
+    #     task_id=t3_task_id,
+    #     gcp_conn_id=gcp_conn_id,
+    #     bucket=source_bucket,
+    #     source_objects='ytd_file.json',
+    #     write_disposition="WRITE_TRUNCATE",
+    #     source_format="NEWLINE_DELIMITED_JSON",
+    #     autodetect=True,
+    #     destination_project_dataset_table=destination_table_name
+    # )
 
-    start_dag >> get_data_ >> store_data_in_gcs >> gcs_to_bq >> end_dag
+    start_dag >> get_data_ >> end_dag
