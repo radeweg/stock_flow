@@ -93,38 +93,6 @@ services:
       retries: 5
     restart: always
 
-  namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
-    container_name: namenode
-    ports:
-      - 9000:9000  # Namenode RPC for HDFS clients
-      - 9870:9870  # WebUI - dfs.namenode.http-address
-    volumes:
-      - hadoop_namenode:/hadoop/dfs/name
-    environment:
-      - CLUSTER_NAME=test
-    env_file:
-      - ./hadoop.env
-    networks:
-      - hadoop
-
-  datanode1:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode1
-    ports:
-      - 9864:9864  # WebUI - dfs.datanode.http.address
-      - 9866:9866  # Data transfer - dfs.datanode.address
-    depends_on:
-      - namenode
-    volumes:
-      - hadoop_datanode1:/hadoop/dfs/data
-    env_file:
-      - ./hadoop.env
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
-    networks:
-      - hadoop
-
   redis:
     image: redis:latest
     expose:
@@ -189,6 +157,38 @@ services:
     volumes:
       - ../spark/app:/usr/local/spark/app # Spark scripts folder (Must be the same path in airflow and Spark Cluster)
       - ../spark/resources:/usr/local/spark/resources #Resources folder (Must be the same path in airflow and Spark Cluster)
+    networks:
+      - hadoop
+
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode1
+    ports:
+      - 9864:9864  # WebUI - dfs.datanode.http.address
+      - 9866:9866  # Data transfer - dfs.datanode.address
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    networks:
+      - hadoop
+    env_file:
+      - ./hadoop.env
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    ports:
+      - 9000:9000  # Namenode RPC for HDFS clients
+      - 9870:9870  # WebUI - dfs.namenode.http-address
+    environment:
+      - CLUSTER_NAME=test
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    env_file:
+      - ./hadoop.env
     networks:
       - hadoop
 

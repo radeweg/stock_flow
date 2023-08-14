@@ -5,7 +5,6 @@ import functions.function as f
 from pyspark.sql import SparkSession
 
 
-
 def main():
     spark = (SparkSession.builder
              .getOrCreate())
@@ -27,23 +26,11 @@ def main():
     moving_average = f.moving_average(pyspark_df)
 
     # write
-    pyspark_df.select("*").write.mode("overwrite").format("jdbc") \
-        .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
-        .option("driver", "org.postgresql.Driver") \
-        .option("dbtable", "stock_flow") \
-        .option("user", "airflow") \
-        .option("password", "airflow").save()
-
-    # read
-    logging.info(spark.read.format("jdbc") \
-                 .option("url", 'jdbc:postgresql://postgres:5432/postgres') \
-                 .option("driver", "org.postgresql.Driver") \
-                 .option("user", "airflow") \
-                 .option("password", "airflow") \
-                 .option("query", "SELECT * FROM stock_flow") \
-                 .load().show())
-    ytd.show()
-    moving_average.show()
+    output_path = "hdfs_conn_id"
+    # write
+    pyspark_df.write.parquet(output_path, mode="overwrite")
+    pyspark_df_read = spark.read.parquet(output_path)
+    pyspark_df_read.show()
 
 
 if __name__ == '__main__':

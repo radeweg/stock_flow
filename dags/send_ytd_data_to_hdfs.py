@@ -23,7 +23,7 @@ def main():
     pyspark_df = f.add_new_required_column(pyspark_df)
     ytd = f.count_ytd_return(pyspark_df)
 
-    output_path = "hdfs://localhost:9000/spark"
+    output_path = "hdfs_conn_id"
     # write
     ytd.write.parquet(output_path,mode="overwrite")
     # read

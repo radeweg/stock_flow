@@ -9,7 +9,7 @@ from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQue
 
 jars = "/opt/airflow/dags/postgresql-42.5.4.jar"
 driver_class_path = "/opt/airflow/dags/postgresql-42.5.4.jar"
-spark_job = "/opt/airflow/dags/send_ytd_data_to_postgres.py"
+spark_job = "/opt/airflow/dags/send_ytd_data_to_hdfs.py"
 destination_table_name = "long-justice-346420.stock_flow_dataset.ytd_table"
 source_bucket = 'databricks-2864737403744337'
 
@@ -37,7 +37,7 @@ with DAG(
     start_dag = EmptyOperator(task_id="start_dag")
     end_dag = EmptyOperator(task_id="end_dag")
 
-    task_id = f"run_spark_job"
+    task_id = f"spark_send_ytd_data_to_hdfs"
     get_data_ = SparkSubmitOperator(
         task_id=task_id,
         application=spark_job,
