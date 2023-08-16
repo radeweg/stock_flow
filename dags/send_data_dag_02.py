@@ -4,19 +4,8 @@ import requests
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from airflow.providers.google.cloud.transfers.postgres_to_gcs import PostgresToGCSOperator
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 
-jars = "/opt/airflow/dags/postgresql-42.5.4.jar"
-driver_class_path = "/opt/airflow/dags/postgresql-42.5.4.jar"
 spark_job = "/opt/airflow/dags/send_ytd_data_to_hdfs.py"
-destination_table_name = "long-justice-346420.stock_flow_dataset.ytd_table"
-source_bucket = 'databricks-2864737403744337'
-
-postgres_conn_id = 'postgres_local'
-gcp_conn_id = 'google_connection'
-
-query = """SELECT * FROM ytd_table"""
 
 default_args = {
     'owner': 'airflow',
@@ -42,30 +31,7 @@ with DAG(
         task_id=task_id,
         application=spark_job,
         conn_id='spark_conn_id',
-        driver_class_path=driver_class_path,
-        jars=jars,
         dag=dag
     )
-    # t2_task_id = f"send_data_to_gcs"
-    # store_data_in_gcs = PostgresToGCSOperator(
-    #     task_id=t2_task_id,
-    #     postgres_conn_id=postgres_conn_id,
-    #     gcp_conn_id=gcp_conn_id,
-    #     export_format='NEWLINE_DELIMITED_JSON',
-    #     bucket=source_bucket,
-    #     filename='ytd_file.json',
-    #     sql=query
-    # )
-    # t3_task_id = f"store_data_in_table"
-    # gcs_to_bq = GCSToBigQueryOperator(
-    #     task_id=t3_task_id,
-    #     gcp_conn_id=gcp_conn_id,
-    #     bucket=source_bucket,
-    #     source_objects='ytd_file.json',
-    #     write_disposition="WRITE_TRUNCATE",
-    #     source_format="NEWLINE_DELIMITED_JSON",
-    #     autodetect=True,
-    #     destination_project_dataset_table=destination_table_name
-    # )
 
     start_dag >> get_data_ >> end_dag

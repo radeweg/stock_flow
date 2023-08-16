@@ -26,9 +26,9 @@ def main():
     moving_average = f.moving_average(pyspark_df)
 
     # write
-    output_path = "hdfs_conn_id"
+    output_path = "hdfs://namenode:8020/spark_data_raw/"
     # write
-    pyspark_df.write.parquet(output_path, mode="overwrite")
+    pyspark_df.write.save(output_path,format='parquet',mode="overwrite")
     pyspark_df_read = spark.read.parquet(output_path)
     pyspark_df_read.show()
 
