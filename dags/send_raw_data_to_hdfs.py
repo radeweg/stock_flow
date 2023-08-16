@@ -1,11 +1,11 @@
-import os
-import logging
 import requests
 import functions.function as f
 from pyspark.sql import SparkSession
 
 
 def main():
+    output_path = "hdfs://namenode:8020/spark_data_raw/"
+
     spark = (SparkSession.builder
              .getOrCreate())
 
@@ -21,16 +21,12 @@ def main():
     pyspark_df = spark.createDataFrame(data)
     pyspark_df.describe().show()
     pyspark_df = f.add_new_required_column(pyspark_df)
-    ytd = f.count_ytd_return(pyspark_df)
-    f.count_hv_ratio(pyspark_df)
-    moving_average = f.moving_average(pyspark_df)
 
     # write
-    output_path = "hdfs://namenode:8020/spark_data_raw/"
-    # write
-    pyspark_df.write.save(output_path,format='parquet',mode="overwrite")
-    pyspark_df_read = spark.read.parquet(output_path)
-    pyspark_df_read.show()
+    pyspark_df.write.save(output_path, format='parquet', mode="overwrite")
+
+    # read
+    spark.read.parquet(output_path).show()
 
 
 if __name__ == '__main__':
