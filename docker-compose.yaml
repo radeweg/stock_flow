@@ -152,8 +152,6 @@ services:
       <<: *airflow-common-env
       VAULT_ADDR: "http://0.0.0.0:8200"
       VAULT_TOKEN: "token"
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
