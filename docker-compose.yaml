@@ -51,6 +51,8 @@ x-airflow-common:
   # build: .
   environment:
     &airflow-common-env
+    VAULT_ADDR: http://0.0.0.0:8200
+    VAULT_TOKEN: token
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__WEBSERVER__SECRET_KEY: "cQZAd2uQZbvQLYd8"
@@ -107,6 +109,30 @@ services:
       retries: 50
     restart: always
 
+  vault:
+    image: vault:1.8.2
+    container_name: vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: token
+    networks:
+      - hadoop
+
+  setup-vault:
+    image: alpine
+    volumes:
+      - ./setup_vault.sh:/setup_vault.sh
+      - ./secrets.env:/secrets.env
+    command: /bin/sh -c /setup_vault.sh
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_TOKEN: "token"
+    depends_on:
+      - vault
+    networks:
+      - hadoop
+
   airflow-webserver:
     <<: *airflow-common
     command: webserver
@@ -120,6 +146,14 @@ services:
     restart: always
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
+    env_file:
+      - ./secrets.env
+    environment:
+      <<: *airflow-common-env
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_TOKEN: "token"
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -275,17 +309,19 @@ services:
           echo "Please follow the instructions to increase amount of resources available:"
           echo "   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"
           echo
-        fi
+        fi       
         mkdir -p logs dags plugins
         chown -R "${AIRFLOW_UID}:0" {logs,dags,plugins}
         exec /entrypoint airflow version
     # yamllint enable rule:line-length
+    env_file:
+      - ./secrets.env
     environment:
       <<: *airflow-common-env
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_TOKEN: "token"
       _AIRFLOW_DB_UPGRADE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
     volumes:
