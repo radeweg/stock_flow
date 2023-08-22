@@ -84,10 +84,8 @@ x-airflow-common:
 services:
   postgres:
     image: postgres:13
-    environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
+    env_file:
+      - ./secrets_postgres.env
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
     healthcheck:
@@ -124,6 +122,7 @@ services:
     volumes:
       - ./setup_vault.sh:/setup_vault.sh
       - ./secrets.env:/secrets.env
+      - ./secrets_postgres.env:/secrets_postgres.env
     command: /bin/sh -c /setup_vault.sh
     environment:
       VAULT_ADDR: "http://0.0.0.0:8200"
