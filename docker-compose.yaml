@@ -51,7 +51,7 @@ x-airflow-common:
   # build: .
   environment:
     &airflow-common-env
-    VAULT_ADDR: http://0.0.0.0:8200
+    VAULT_DEV_LISTEN_ADDRESS: http://vault:8200
     VAULT_TOKEN: token
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -108,12 +108,16 @@ services:
     restart: always
 
   vault:
-    image: vault:1.8.2
+    image: vault:1.13.3
     container_name: vault
     ports:
       - "8200:8200"
     environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_API_ADDR: http://vault:8200
+      VAULT_ADDRESS: http://vault:8200
       VAULT_DEV_ROOT_TOKEN_ID: token
+      VAULT_TOKEN: token
     networks:
       - hadoop
 
@@ -125,8 +129,8 @@ services:
       - ./secrets_postgres.env:/secrets_postgres.env
     command: /bin/sh -c /setup_vault.sh
     environment:
-      VAULT_ADDR: "http://0.0.0.0:8200"
-      VAULT_TOKEN: "token"
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: token
     depends_on:
       - vault
     networks:
@@ -149,7 +153,7 @@ services:
       - ./secrets.env
     environment:
       <<: *airflow-common-env
-      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_ADDR: "http://vault:8200"
       VAULT_TOKEN: "token"
     depends_on:
       <<: *airflow-common-depends-on
@@ -248,6 +252,8 @@ services:
     <<: *airflow-common
     entrypoint: /bin/bash
     # yamllint disable rule:line-length
+    depends_on:
+      - vault
     command:
       - -c
       - |
@@ -315,8 +321,6 @@ services:
       - ./secrets.env
     environment:
       <<: *airflow-common-env
-      VAULT_ADDR: "http://0.0.0.0:8200"
-      VAULT_TOKEN: "token"
       _AIRFLOW_DB_UPGRADE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
       _PIP_ADDITIONAL_REQUIREMENTS: ''

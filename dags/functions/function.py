@@ -23,7 +23,15 @@ def moving_average(df):
 
 
 def total_return(df):
-    return (df.select("close").toPandas().iloc[-1] / df.select("close").toPandas().iloc[0] - 1) * 100
+    df = df.withColumn('date', df['date'].cast('date'))
+    df = df.orderBy('date')
+    initial_close_price = df.select(first('close')).collect()[0][0]
+    final_close_price = df.select(last('close')).collect()[0][0]
+    total_return_price = (final_close_price - initial_close_price) / initial_close_price
+    total_return_percentage = total_return_price * 100
+    total_return_df = spark.createDataFrame([(total_return_percentage,)], ['total_return_percentage'])
+
+    return total_return_df
 
 
 def count_rent_day_by_day(df):

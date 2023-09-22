@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 
 
 def main():
-    output_path = "hdfs://namenode:8020/spark_data_ytd/"
+    total_return_path = "hdfs://namenode:8020/spark_data_tr/"
 
     spark = (SparkSession.builder
              .getOrCreate())
@@ -21,15 +21,14 @@ def main():
     pyspark_df = spark.createDataFrame(data)
     pyspark_df.describe().show()
     pyspark_df = f.add_new_required_column(pyspark_df)
-    ytd = f.count_ytd_return(pyspark_df)
+    total_return = f.total_return(pyspark_df)
 
 
     # write
-    ytd.write.parquet(output_path, mode="overwrite")
-
+    total_return.write.parquet(total_return_path,mode="overwrite" )
 
     # read
-    spark.read.parquet(output_path).show()
+    spark.read.parquet(total_return_path).show()
 
 
 if __name__ == '__main__':
